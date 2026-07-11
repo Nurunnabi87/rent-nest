@@ -1,5 +1,7 @@
 import cors from 'cors';
 import express, { Application, Request, Response } from 'express';
+import globalErrorHandler from './middlewares/globalErrorHandler';
+import notFound from './middlewares/notFound';
 
 const app: Application = express();
 
@@ -22,5 +24,10 @@ app.get('/api/health', (req: Request, res: Response) => {
     timestamp: new Date().toISOString(),
   });
 });
+
+// Must be registered AFTER all routes:
+// notFound catches unknown URLs, globalErrorHandler catches all thrown errors
+app.use(notFound);
+app.use(globalErrorHandler);
 
 export default app;
