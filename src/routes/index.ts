@@ -5,6 +5,10 @@ import {
   LandlordPropertyRoutes,
   PropertyRoutes,
 } from '../modules/property/property.routes';
+import {
+  LandlordRequestRoutes,
+  RentalRoutes,
+} from '../modules/rental/rental.routes';
 
 const router = Router();
 
@@ -26,6 +30,14 @@ const moduleRoutes = [
   {
     path: '/landlord/properties',
     route: LandlordPropertyRoutes,
+  },
+  {
+    path: '/rentals',
+    route: RentalRoutes,
+  },
+  {
+    path: '/landlord/requests',
+    route: LandlordRequestRoutes,
   },
 ];
 
