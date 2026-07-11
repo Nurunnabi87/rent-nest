@@ -24,4 +24,15 @@ const login = async (req: Request, res: Response) => {
   });
 };
 
-export const AuthController = { register, login };
+const getMe = async (req: Request, res: Response) => {
+  // req.user was attached by the auth middleware after verifying the JWT
+  const result = await AuthService.getMe(req.user!.userId);
+
+  sendResponse(res, {
+    statusCode: 200,
+    message: 'Profile retrieved successfully',
+    data: result,
+  });
+};
+
+export const AuthController = { register, login, getMe };
