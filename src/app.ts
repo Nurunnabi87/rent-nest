@@ -2,12 +2,16 @@ import cors from 'cors';
 import express, { Application, Request, Response } from 'express';
 import globalErrorHandler from './middlewares/globalErrorHandler';
 import notFound from './middlewares/notFound';
+import router from './routes';
 
 const app: Application = express();
 
 // Global middlewares
 app.use(cors());
 app.use(express.json());
+
+// All feature routes live under /api
+app.use('/api', router);
 
 // Root & health check routes
 app.get('/', (req: Request, res: Response) => {
