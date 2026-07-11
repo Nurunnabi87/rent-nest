@@ -1,6 +1,10 @@
 import { Router } from 'express';
 import { AuthRoutes } from '../modules/auth/auth.routes';
 import { CategoryRoutes } from '../modules/category/category.routes';
+import {
+  LandlordPropertyRoutes,
+  PropertyRoutes,
+} from '../modules/property/property.routes';
 
 const router = Router();
 
@@ -14,6 +18,14 @@ const moduleRoutes = [
   {
     path: '/categories',
     route: CategoryRoutes,
+  },
+  {
+    path: '/properties',
+    route: PropertyRoutes,
+  },
+  {
+    path: '/landlord/properties',
+    route: LandlordPropertyRoutes,
   },
 ];
 
