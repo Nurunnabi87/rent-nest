@@ -12,6 +12,7 @@ import {
 import { PaymentRoutes } from '../modules/payment/payment.routes';
 import { ReviewRoutes } from '../modules/review/review.routes';
 import { AdminRoutes } from '../modules/admin/admin.routes';
+import { DocsRoutes } from '../docs/docs.routes';
 
 const router = Router();
 
@@ -53,6 +54,10 @@ const moduleRoutes = [
   {
     path: '/admin',
     route: AdminRoutes,
+  },
+  {
+    path: '/docs',
+    route: DocsRoutes,
   },
 ];
 
