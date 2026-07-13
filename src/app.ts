@@ -2,12 +2,22 @@ import cors from 'cors';
 import express, { Application, Request, Response } from 'express';
 import globalErrorHandler from './middlewares/globalErrorHandler';
 import notFound from './middlewares/notFound';
+import { PaymentController } from './modules/payment/payment.controller';
 import router from './routes';
 
 const app: Application = express();
 
 // Global middlewares
 app.use(cors());
+
+// Stripe webhook needs the RAW request body to verify the signature,
+// so this route is registered BEFORE express.json() parses bodies.
+app.post(
+  '/api/payments/webhook',
+  express.raw({ type: 'application/json' }),
+  PaymentController.handleWebhook
+);
+
 app.use(express.json());
 
 // All feature routes live under /api

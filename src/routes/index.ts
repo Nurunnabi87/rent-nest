@@ -9,6 +9,7 @@ import {
   LandlordRequestRoutes,
   RentalRoutes,
 } from '../modules/rental/rental.routes';
+import { PaymentRoutes } from '../modules/payment/payment.routes';
 
 const router = Router();
 
@@ -38,6 +39,10 @@ const moduleRoutes = [
   {
     path: '/landlord/requests',
     route: LandlordRequestRoutes,
+  },
+  {
+    path: '/payments',
+    route: PaymentRoutes,
   },
 ];
 
