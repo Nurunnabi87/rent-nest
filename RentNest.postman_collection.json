@@ -1,0 +1,646 @@
+{
+  "info": {
+    "name": "RentNest API",
+    "description": "RentNest - Find & List Rental Properties with Ease.\n\nBackend API for a rental property marketplace with three roles (TENANT, LANDLORD, ADMIN), Stripe payments and reviews.\n\n**How to use:**\n1. Set the `baseUrl` variable (local: http://localhost:5000, or the live URL).\n2. Run the three Login requests in the Auth folder once - they auto-save tokens into collection variables.\n3. Every other request picks the right token automatically.\n\n**Admin credentials:** admin@rentnest.com / admin123\n\n**Stripe test card:** 4242 4242 4242 4242, any future expiry, any CVC.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:5000" },
+    { "key": "adminToken", "value": "" },
+    { "key": "tenantToken", "value": "" },
+    { "key": "landlordToken", "value": "" },
+    { "key": "categoryId", "value": "" },
+    { "key": "propertyId", "value": "" },
+    { "key": "rentalId", "value": "" },
+    { "key": "paymentId", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "Health",
+      "item": [
+        {
+          "name": "API Root",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/"
+          }
+        },
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/health"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Register Tenant",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/auth/register",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Demo Tenant\",\n  \"email\": \"demo.tenant@example.com\",\n  \"password\": \"pass123\",\n  \"phone\": \"01700000001\",\n  \"role\": \"TENANT\"\n}"
+            },
+            "description": "Role must be TENANT or LANDLORD. ADMIN cannot be registered via the API."
+          }
+        },
+        {
+          "name": "Register Landlord",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/auth/register",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Demo Landlord\",\n  \"email\": \"demo.landlord@example.com\",\n  \"password\": \"pass123\",\n  \"phone\": \"01700000002\",\n  \"role\": \"LANDLORD\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Login Tenant (saves token)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "  pm.collectionVariables.set('tenantToken', pm.response.json().data.accessToken);",
+                  "  console.log('tenantToken saved');",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"demo.tenant@example.com\",\n  \"password\": \"pass123\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Login Landlord (saves token)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "  pm.collectionVariables.set('landlordToken', pm.response.json().data.accessToken);",
+                  "  console.log('landlordToken saved');",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"demo.landlord@example.com\",\n  \"password\": \"pass123\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Login Admin (saves token)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "  pm.collectionVariables.set('adminToken', pm.response.json().data.accessToken);",
+                  "  console.log('adminToken saved');",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@rentnest.com\",\n  \"password\": \"admin123\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Get Current User (me)",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{tenantToken}}" }
+            ],
+            "url": "{{baseUrl}}/api/auth/me",
+            "description": "Works with any role's token. Swap the token variable to test other roles."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Categories",
+      "item": [
+        {
+          "name": "Get All Categories (public, saves first id)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200 && pm.response.json().data.length > 0) {",
+                  "  pm.collectionVariables.set('categoryId', pm.response.json().data[0].id);",
+                  "  console.log('categoryId saved');",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/categories"
+          }
+        },
+        {
+          "name": "Create Category (admin)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+            ],
+            "url": "{{baseUrl}}/api/categories",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Penthouse\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Update Category (admin)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+            ],
+            "url": "{{baseUrl}}/api/categories/{{categoryId}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Luxury Apartment\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Delete Category (admin)",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+            ],
+            "url": "{{baseUrl}}/api/categories/{{categoryId}}",
+            "description": "Fails with 400 if any property uses this category."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Properties (Public)",
+      "item": [
+        {
+          "name": "Browse Properties (filters + pagination, saves first id)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200 && pm.response.json().data.length > 0) {",
+                  "  pm.collectionVariables.set('propertyId', pm.response.json().data[0].id);",
+                  "  console.log('propertyId saved');",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/properties?page=1&limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "properties"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "10" },
+                { "key": "searchTerm", "value": "dhaka", "disabled": true },
+                { "key": "location", "value": "Dhanmondi", "disabled": true },
+                { "key": "minPrice", "value": "10000", "disabled": true },
+                { "key": "maxPrice", "value": "50000", "disabled": true },
+                { "key": "categoryId", "value": "{{categoryId}}", "disabled": true },
+                { "key": "bedrooms", "value": "2", "disabled": true },
+                { "key": "amenities", "value": "wifi,parking", "disabled": true },
+                { "key": "availability", "value": "AVAILABLE", "disabled": true },
+                { "key": "sortBy", "value": "rentAmount", "disabled": true },
+                { "key": "sortOrder", "value": "asc", "disabled": true }
+              ]
+            },
+            "description": "Enable any of the disabled query params to filter. All filters can be combined."
+          }
+        },
+        {
+          "name": "Get Property Details",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/properties/{{propertyId}}",
+            "description": "Includes landlord contact, reviews and average rating."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Landlord - Properties",
+      "item": [
+        {
+          "name": "Create Property (saves id)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "  pm.collectionVariables.set('propertyId', pm.response.json().data.id);",
+                  "  console.log('propertyId saved');",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{landlordToken}}" }
+            ],
+            "url": "{{baseUrl}}/api/landlord/properties",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Modern 3BR Apartment in Gulshan\",\n  \"description\": \"Bright three bedroom apartment with balcony, close to shops and schools.\",\n  \"location\": \"Gulshan, Dhaka\",\n  \"rentAmount\": 45000,\n  \"bedrooms\": 3,\n  \"bathrooms\": 2,\n  \"amenities\": [\"wifi\", \"lift\", \"parking\", \"generator\"],\n  \"images\": [\"https://example.com/apartment.jpg\"],\n  \"categoryId\": \"{{categoryId}}\"\n}"
+            },
+            "description": "Run 'Get All Categories' first so {{categoryId}} is set."
+          }
+        },
+        {
+          "name": "My Properties",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{landlordToken}}" }
+            ],
+            "url": "{{baseUrl}}/api/landlord/properties"
+          }
+        },
+        {
+          "name": "Update Property",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{landlordToken}}" }
+            ],
+            "url": "{{baseUrl}}/api/landlord/properties/{{propertyId}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"rentAmount\": 47000,\n  \"availability\": \"AVAILABLE\"\n}"
+            },
+            "description": "All fields optional. availability: AVAILABLE | RENTED | UNAVAILABLE. Only the owner can update (403 otherwise)."
+          }
+        },
+        {
+          "name": "Delete Property (soft delete)",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{landlordToken}}" }
+            ],
+            "url": "{{baseUrl}}/api/landlord/properties/{{propertyId}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Rentals (Tenant)",
+      "item": [
+        {
+          "name": "Submit Rental Request (saves id)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "  pm.collectionVariables.set('rentalId', pm.response.json().data.id);",
+                  "  console.log('rentalId saved');",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{tenantToken}}" }
+            ],
+            "url": "{{baseUrl}}/api/rentals",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"propertyId\": \"{{propertyId}}\",\n  \"moveInDate\": \"2026-10-01\",\n  \"durationMonths\": 12,\n  \"message\": \"Hello, I am very interested in this property.\"\n}"
+            },
+            "description": "moveInDate must be in the future. Duplicate PENDING/APPROVED requests for the same property are rejected with 409."
+          }
+        },
+        {
+          "name": "My Rental Requests",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{tenantToken}}" }
+            ],
+            "url": "{{baseUrl}}/api/rentals"
+          }
+        },
+        {
+          "name": "Rental Request Details",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{tenantToken}}" }
+            ],
+            "url": "{{baseUrl}}/api/rentals/{{rentalId}}",
+            "description": "Visible only to the tenant who made it, the property's landlord, or an admin."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Landlord - Requests",
+      "item": [
+        {
+          "name": "Incoming Requests",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{landlordToken}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/landlord/requests",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "landlord", "requests"],
+              "query": [
+                { "key": "status", "value": "PENDING", "disabled": true }
+              ]
+            },
+            "description": "Optional ?status= filter: PENDING | APPROVED | REJECTED | ACTIVE | COMPLETED"
+          }
+        },
+        {
+          "name": "Approve Request",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{landlordToken}}" }
+            ],
+            "url": "{{baseUrl}}/api/landlord/requests/{{rentalId}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"APPROVED\",\n  \"landlordNote\": \"Welcome! Please complete the payment to confirm.\"\n}"
+            },
+            "description": "Only PENDING requests can be approved or rejected."
+          }
+        },
+        {
+          "name": "Reject Request",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{landlordToken}}" }
+            ],
+            "url": "{{baseUrl}}/api/landlord/requests/{{rentalId}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"REJECTED\",\n  \"landlordNote\": \"Sorry, the property is no longer available.\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Complete Rental (tenancy ended)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{landlordToken}}" }
+            ],
+            "url": "{{baseUrl}}/api/landlord/requests/{{rentalId}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"COMPLETED\",\n  \"landlordNote\": \"Great tenant!\"\n}"
+            },
+            "description": "Only an ACTIVE (paid) rental can be completed. Frees the property back to AVAILABLE and allows the tenant to leave a review."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Payments (Stripe)",
+      "item": [
+        {
+          "name": "Create Checkout Session (saves paymentId)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "  const data = pm.response.json().data;",
+                  "  pm.collectionVariables.set('paymentId', data.paymentId);",
+                  "  console.log('OPEN THIS URL IN A BROWSER TO PAY:');",
+                  "  console.log(data.checkoutUrl);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{tenantToken}}" }
+            ],
+            "url": "{{baseUrl}}/api/payments/create",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"rentalRequestId\": \"{{rentalId}}\"\n}"
+            },
+            "description": "Only works for APPROVED rental requests. Open the returned checkoutUrl in a browser and pay with test card 4242 4242 4242 4242 (any future expiry, any CVC). Stripe then redirects to /api/payments/success which activates the rental."
+          }
+        },
+        {
+          "name": "Payment History",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{tenantToken}}" }
+            ],
+            "url": "{{baseUrl}}/api/payments"
+          }
+        },
+        {
+          "name": "Payment Details",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{tenantToken}}" }
+            ],
+            "url": "{{baseUrl}}/api/payments/{{paymentId}}",
+            "description": "Visible to the paying tenant, the property's landlord, or an admin."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Reviews",
+      "item": [
+        {
+          "name": "Create Review",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{tenantToken}}" }
+            ],
+            "url": "{{baseUrl}}/api/reviews",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"propertyId\": \"{{propertyId}}\",\n  \"rating\": 5,\n  \"comment\": \"Wonderful apartment and a very helpful landlord!\"\n}"
+            },
+            "description": "Requires a COMPLETED rental on this property. One review per tenant per property."
+          }
+        },
+        {
+          "name": "My Reviews",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{tenantToken}}" }
+            ],
+            "url": "{{baseUrl}}/api/reviews"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Admin",
+      "item": [
+        {
+          "name": "All Users",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/users",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "admin", "users"],
+              "query": [
+                { "key": "role", "value": "LANDLORD", "disabled": true },
+                { "key": "status", "value": "BANNED", "disabled": true },
+                { "key": "page", "value": "1", "disabled": true },
+                { "key": "limit", "value": "10", "disabled": true }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Ban User",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+            ],
+            "url": "{{baseUrl}}/api/admin/users/PASTE_USER_ID_HERE",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"BANNED\"\n}"
+            },
+            "description": "Copy a user id from the All Users response. Banned users are locked out immediately, even with a valid token. Admins cannot be banned."
+          }
+        },
+        {
+          "name": "Unban User",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+            ],
+            "url": "{{baseUrl}}/api/admin/users/PASTE_USER_ID_HERE",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"ACTIVE\"\n}"
+            }
+          }
+        },
+        {
+          "name": "All Properties (includes soft-deleted)",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+            ],
+            "url": "{{baseUrl}}/api/admin/properties"
+          }
+        },
+        {
+          "name": "All Rental Requests",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/rentals",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "admin", "rentals"],
+              "query": [
+                { "key": "status", "value": "ACTIVE", "disabled": true }
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
