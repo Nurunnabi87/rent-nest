@@ -11,6 +11,7 @@ import {
 } from '../modules/rental/rental.routes';
 import { PaymentRoutes } from '../modules/payment/payment.routes';
 import { ReviewRoutes } from '../modules/review/review.routes';
+import { AdminRoutes } from '../modules/admin/admin.routes';
 
 const router = Router();
 
@@ -48,6 +49,10 @@ const moduleRoutes = [
   {
     path: '/reviews',
     route: ReviewRoutes,
+  },
+  {
+    path: '/admin',
+    route: AdminRoutes,
   },
 ];
 
