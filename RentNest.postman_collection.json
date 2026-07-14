@@ -4,8 +4,44 @@
     "description": "RentNest - Find & List Rental Properties with Ease.\n\nBackend API for a rental property marketplace with three roles (TENANT, LANDLORD, ADMIN), Stripe payments and reviews.\n\n**How to use:**\n1. Set the `baseUrl` variable (local: http://localhost:5000, or the live URL).\n2. Run the three Login requests in the Auth folder once - they auto-save tokens into collection variables.\n3. Every other request picks the right token automatically.\n\n**Admin credentials:** admin@rentnest.com / admin123\n\n**Stripe test card:** 4242 4242 4242 4242, any future expiry, any CVC.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// AUTO-LOGIN: before any request, fetch missing role tokens automatically.",
+          "// Makes the collection work in any click order with zero manual setup.",
+          "const base = pm.collectionVariables.get('baseUrl');",
+          "const accounts = [",
+          "  ['tenantToken', 'demo.tenant@example.com', 'pass123'],",
+          "  ['landlordToken', 'demo.landlord@example.com', 'pass123'],",
+          "  ['adminToken', 'admin@rentnest.com', 'admin123']",
+          "];",
+          "accounts.forEach(([varName, email, password]) => {",
+          "  const current = pm.collectionVariables.get(varName);",
+          "  if (!current || current.length < 10) {",
+          "    pm.sendRequest({",
+          "      url: base + '/api/auth/login',",
+          "      method: 'POST',",
+          "      header: { 'Content-Type': 'application/json' },",
+          "      body: { mode: 'raw', raw: JSON.stringify({ email, password }) }",
+          "    }, (err, res) => {",
+          "      if (!err && res.code === 200) {",
+          "        pm.collectionVariables.set(varName, res.json().data.accessToken);",
+          "        console.log('auto-login OK: ' + varName);",
+          "      } else {",
+          "        console.log('auto-login FAILED for ' + varName + ': ' + (err || res.code));",
+          "      }",
+          "    });",
+          "  }",
+          "});"
+        ]
+      }
+    }
+  ],
   "variable": [
-    { "key": "baseUrl", "value": "http://localhost:5000" },
+    { "key": "baseUrl", "value": "https://rent-nest-nurunnabi-jewels-projects.vercel.app" },
     { "key": "adminToken", "value": "" },
     { "key": "tenantToken", "value": "" },
     { "key": "landlordToken", "value": "" },
