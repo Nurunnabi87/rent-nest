@@ -58,8 +58,10 @@ const createCheckoutSession = async (
       },
     ],
     metadata: { rentalRequestId: rental.id, tenantId },
-    success_url: `${config.server_url}/api/payments/success?session_id={CHECKOUT_SESSION_ID}`,
-    cancel_url: `${config.server_url}/api/payments/cancel`,
+    // Stripe returns the browser to the frontend, which then confirms the
+    // payment against GET /api/payments/success.
+    success_url: `${config.frontend_url}/payment/success?session_id={CHECKOUT_SESSION_ID}&rentalId=${rental.id}`,
+    cancel_url: `${config.frontend_url}/payment/cancel?rentalId=${rental.id}`,
   });
 
   // Track the payment in OUR database from the very beginning (PENDING).

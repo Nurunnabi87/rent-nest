@@ -11,6 +11,7 @@ const config = {
   stripe_secret_key: process.env.STRIPE_SECRET_KEY as string,
   stripe_webhook_secret: process.env.STRIPE_WEBHOOK_SECRET as string,
   server_url: process.env.SERVER_URL || 'http://localhost:5000',
+  frontend_url: process.env.FRONTEND_URL || 'http://localhost:3000',
 };
 
 export default config;
