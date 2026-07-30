@@ -8,6 +8,7 @@
     "build": "tsc",
     "start": "node dist/server.js",
     "seed": "tsx prisma/seed.ts",
+    "fix-images": "tsx prisma/fix-images.ts",
     "postinstall": "prisma generate"
   },
   "prisma": {
