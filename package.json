@@ -9,6 +9,8 @@
     "start": "node dist/server.js",
     "seed": "tsx prisma/seed.ts",
     "fix-images": "tsx prisma/fix-images.ts",
+    "seed:properties": "tsx prisma/seed-properties.ts",
+    "normalize-rents": "tsx prisma/normalize-rents.ts",
     "postinstall": "prisma generate"
   },
   "prisma": {
